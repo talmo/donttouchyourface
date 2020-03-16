@@ -471,19 +471,9 @@ poseDetectionFrame();
 }
 
 
-// export async function bindPage() {
     async function bindPage() {
-  // toggleLoadingUI(true);
-  // const net = await posenet.load({
-  //   architecture: guiState.input.architecture,
-  //   outputStride: guiState.input.outputStride,
-  //   inputResolution: guiState.input.inputResolution,
-  //   multiplier: guiState.input.multiplier,
-  //   quantBytes: guiState.input.quantBytes
-  // });
-  // toggleLoadingUI(false);
   
-  if isMobile() {
+  if (isMobile()) {
     const net = await posenet.load({
       architecture: 'MobileNetV1',
       outputStride: 16,
