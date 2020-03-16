@@ -4,11 +4,14 @@
     <title>Don't touch your face!</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style type="text/css">
-        body {
-          font-family: Arial;
-          background-color: #eeeeee;
-      }
-      h1 {
+    body {
+        font-family: Arial;
+        background-color: #eeeeee;
+    }
+    h1 {
+        color: #444444;
+    }
+    #danger-zone > h1 {
         color: red;
     }
     #info {
@@ -20,6 +23,7 @@
 <body>
     <div id="page" style="width: 100%;">
         <div id="main" style="display: table; margin-left: auto; margin-right: auto;">
+            <div style="display: table; margin-left: auto; margin-right: auto;"><h1>(Don't) touch your face</h1></div>
             <video id="video" playsinline style="display: none;"></video>
             <canvas id="output"></canvas>
             <div id="danger-zone" style="display: none; margin-left: auto; margin-right: auto;"><h1>Danger zone!!!</h1></div>
@@ -31,9 +35,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/posenet"></script>
 
 <script type="text/javascript">
-    let videoWidth = 600;
-    let videoHeight = 480;
-    // const color = 'aqua';
+    let videoWidth = 640;
+    let videoHeight = videoWidth * (1/1.777);
     let color = 'aqua';
     const boundingBoxColor = 'red';
     const lineWidth = 2;
@@ -61,7 +64,7 @@
         const mobile = isMobile();
         if (mobile) {
             videoWidth = 320;
-            videoHeight = 600;
+            videoHeight = videoWidth * 1.777;
         }
 
         const video = document.getElementById('video');
