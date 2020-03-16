@@ -1,25 +1,38 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Stop touching your face!</title>
+    <title>Don't touch your face!</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style type="text/css">
+        body {
+          font-family: Arial;
+          background-color: #eeeeee;
+        }
+        h1 {
+            color: red;
+        }
+        #info {
+            font-size: 10px;
+            color: #222222;
+        }
+    </style>
 </head>
 <body>
-    <div id="page">
-        <div id="main" style="width: 50%; margin: 0 auto;">
-            <video id="video" playsinline="" style="-moz-transform:scaleX(-1);-o-transform:scaleX(-1);-webkit-transform:scaleX(-1);transform:scaleX(-1);display:none;"></video>
+    <div id="page" style="width: 100%;">
+        <div id="main" style="display: table; margin-left: auto; margin-right: auto;">
+            <video id="video" playsinline style="display: none;"></video>
             <canvas id="output"></canvas>
-            <div id="warning"></div>
+            <div id="danger-zone" style="display: none; margin-left: auto; margin-right: auto;"><h1>Danger zone!!!</h1></div>
+            <div id="info" style="display: table; margin-left: auto; margin-right: auto;"></div>
         </div>
-        <div id="info"></div>
     </div>
 </body>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/posenet"></script>
 
 <script type="text/javascript">
-    const videoWidth = 600;
-    const videoHeight = 480;
+    let videoWidth = 600;
+    let videoHeight = 480;
     // const color = 'aqua';
     let color = 'aqua';
     const boundingBoxColor = 'red';
@@ -45,11 +58,16 @@
             'Browser API navigator.mediaDevices.getUserMedia not available');
     }
 
+    const mobile = isMobile();
+    if (mobile) {
+        videoWidth = 320;
+        videoHeight = 600;
+    }
+
     const video = document.getElementById('video');
     video.width = videoWidth;
     video.height = videoHeight;
 
-    const mobile = isMobile();
     const stream = await navigator.mediaDevices.getUserMedia({
         'audio': false,
         'video': {
@@ -384,10 +402,12 @@ function detectPoseInRealTime(video, net) {
     // For each pose (i.e. person) detected in an image, loop through the poses
     // and draw the resulting skeleton and keypoints if over certain confidence
     // scores
-    let warning_div = document.getElementById('warning');
-    // warning_div.textContent = '';
-    warning_div.innerHTML = '';
-    warning_div.style.display = 'block';
+    let info_div = document.getElementById('info');
+    // info_div.textContent = '';
+    info_div.innerHTML = '';
+    info_div.style.display = 'block';
+
+    let dangerzone_div = document.getElementById('danger-zone');
 
     poses.forEach(({score, keypoints}) => {
       if (score >= minPoseConfidence) {
@@ -402,14 +422,14 @@ function detectPoseInRealTime(video, net) {
           // 9 leftWrist
           // 10 rightWrist
           let min_dist = 10000;
-          warning_div.textContent = '';
+          info_div.textContent = '';
           for (const wrist of [keypoints[9], keypoints[10]]) {
             for (const face of [keypoints[0], keypoints[1], keypoints[2]]) {
                 let dist = Math.pow(Math.pow(wrist["position"]["x"] - face["position"]["x"], 2) + Math.pow(wrist["position"]["y"] - face["position"]["y"], 2), 0.5);
                 // console.log("Dist ("+ wrist["part"] +" <-> "+ face["part"] +"):" + dist);
-                // warning_div.textContent += "Dist ("+ wrist["part"] +" <-> "+ face["part"] +"): " + dist + "\n";
-                warning_div.innerHTML += "Dist ("+ wrist["part"] +" <-> "+ face["part"] +"): " + dist + "\n<br>";
-                // warning_div.textContent = 'Stop touching your face!';
+                // info_div.textContent += "Dist ("+ wrist["part"] +" <-> "+ face["part"] +"): " + dist + "\n";
+                info_div.innerHTML += "Dist ("+ wrist["part"] +" <-> "+ face["part"] +"): " + dist + "\n<br>";
+                // info_div.textContent = 'Stop touching your face!';
                 
                 min_dist = Math.min(min_dist, dist);
 
@@ -417,16 +437,18 @@ function detectPoseInRealTime(video, net) {
           }
 
           if (min_dist < 175) {
-            // warning_div.style.border = "5px solid red";
+            // info_div.style.border = "5px solid red";
             // video.style.border = "5px solid red";
             canvas.style.border = "5px solid red";
             color = "red";
+            dangerzone_div.style.display = "table";
 
           } else {
-            // warning_div.style.border = "5px solid green";
+            // info_div.style.border = "5px solid green";
             // video.style.border = "5px solid green";
             canvas.style.border = "3px solid green";
             color = "aqua";
+            dangerzone_div.style.display = "none";
           }
           drawKeypoints(keypoints, minPartConfidence, ctx);
 
