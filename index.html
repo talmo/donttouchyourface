@@ -264,6 +264,10 @@ function drawOffsetVectors(
 }
 
 
+function computeDist(keypoint1, keypoint2) {
+    return Math.pow(Math.pow(keypoint1["position"]["x"] - keypoint2["position"]["x"], 2) + Math.pow(keypoint1["position"]["y"] - keypoint2["position"]["y"], 2), 0.5)
+}
+
 
 function detectPoseInRealTime(video, net) {
   const canvas = document.getElementById('output');
@@ -279,86 +283,7 @@ function detectPoseInRealTime(video, net) {
   canvas.height = videoHeight;
 
   async function poseDetectionFrame() {
-    // if (guiState.changeToArchitecture) {
-    //   // Important to purge variables and free up GPU memory
-    //   guiState.net.dispose();
-    //   toggleLoadingUI(true);
-    //   guiState.net = await posenet.load({
-    //     architecture: guiState.changeToArchitecture,
-    //     outputStride: guiState.outputStride,
-    //     inputResolution: guiState.inputResolution,
-    //     multiplier: guiState.multiplier,
-    //   });
-    //   toggleLoadingUI(false);
-    //   guiState.architecture = guiState.changeToArchitecture;
-    //   guiState.changeToArchitecture = null;
-    // }
 
-    // if (guiState.changeToMultiplier) {
-    //   guiState.net.dispose();
-    //   toggleLoadingUI(true);
-    //   guiState.net = await posenet.load({
-    //     architecture: guiState.architecture,
-    //     outputStride: guiState.outputStride,
-    //     inputResolution: guiState.inputResolution,
-    //     multiplier: +guiState.changeToMultiplier,
-    //     quantBytes: guiState.quantBytes
-    //   });
-    //   toggleLoadingUI(false);
-    //   guiState.multiplier = +guiState.changeToMultiplier;
-    //   guiState.changeToMultiplier = null;
-    // }
-
-    // if (guiState.changeToOutputStride) {
-    //   // Important to purge variables and free up GPU memory
-    //   guiState.net.dispose();
-    //   toggleLoadingUI(true);
-    //   guiState.net = await posenet.load({
-    //     architecture: guiState.architecture,
-    //     outputStride: +guiState.changeToOutputStride,
-    //     inputResolution: guiState.inputResolution,
-    //     multiplier: guiState.multiplier,
-    //     quantBytes: guiState.quantBytes
-    //   });
-    //   toggleLoadingUI(false);
-    //   guiState.outputStride = +guiState.changeToOutputStride;
-    //   guiState.changeToOutputStride = null;
-    // }
-
-    // if (guiState.changeToInputResolution) {
-    //   // Important to purge variables and free up GPU memory
-    //   guiState.net.dispose();
-    //   toggleLoadingUI(true);
-    //   guiState.net = await posenet.load({
-    //     architecture: guiState.architecture,
-    //     outputStride: guiState.outputStride,
-    //     inputResolution: +guiState.changeToInputResolution,
-    //     multiplier: guiState.multiplier,
-    //     quantBytes: guiState.quantBytes
-    //   });
-    //   toggleLoadingUI(false);
-    //   guiState.inputResolution = +guiState.changeToInputResolution;
-    //   guiState.changeToInputResolution = null;
-    // }
-
-    // if (guiState.changeToQuantBytes) {
-    //   // Important to purge variables and free up GPU memory
-    //   guiState.net.dispose();
-    //   toggleLoadingUI(true);
-    //   guiState.net = await posenet.load({
-    //     architecture: guiState.architecture,
-    //     outputStride: guiState.outputStride,
-    //     inputResolution: guiState.inputResolution,
-    //     multiplier: guiState.multiplier,
-    //     quantBytes: guiState.changeToQuantBytes
-    //   });
-    //   toggleLoadingUI(false);
-    //   guiState.quantBytes = guiState.changeToQuantBytes;
-    //   guiState.changeToQuantBytes = null;
-    // }
-
-    // Begin monitoring code for frames per second
-    // stats.begin();
 
     let poses = [];
     let minPoseConfidence = 0.1;
@@ -422,28 +347,41 @@ function detectPoseInRealTime(video, net) {
           // 9 leftWrist
           // 10 rightWrist
           let min_dist = 10000;
+          let touch_threshold = 175;
+
+          let nose = keypoints[0];
+          let leftEye = keypoints[1];
+          let rightEye = keypoints[2];
+
+          if (nose.score > minPartConfidence) {
+            if (leftEye.score > minPartConfidence) {
+                touch_threshold = computeDist(nose, leftEye) * 4;
+            } else if (rightEye.score > minPartConfidence) {
+                touch_threshold = computeDist(nose, rightEye) * 4;
+            }
+          }
+
           info_div.textContent = '';
+          info_div.innerHTML += "Touch threshold: " + touch_threshold + "\n<br>";
           for (const wrist of [keypoints[9], keypoints[10]]) {
             for (const face of [keypoints[0], keypoints[1], keypoints[2]]) {
                 if (wrist.score > minPartConfidence && face.score > minPartConfidence) {
-                    let dist = Math.pow(Math.pow(wrist["position"]["x"] - face["position"]["x"], 2) + Math.pow(wrist["position"]["y"] - face["position"]["y"], 2), 0.5);
-                    info_div.innerHTML += "Dist ("+ wrist["part"] +" <-> "+ face["part"] +"): " + dist + "\n<br>";
+                    let dist = computeDist(wrist, face);
+
+                    info_div.innerHTML += "Distance  ("+ wrist["part"] +" <-> "+ face["part"] +"): " + dist;
+                    info_div.innerHTML += "\n<br>";
                     min_dist = Math.min(min_dist, dist);
                 }
 
             }
         }
 
-        if (min_dist < 175) {
-            // info_div.style.border = "5px solid red";
-            // video.style.border = "5px solid red";
+        if (min_dist < touch_threshold) {
             canvas.style.border = "5px solid red";
             color = "red";
             dangerzone_div.style.display = "table";
 
         } else {
-            // info_div.style.border = "5px solid green";
-            // video.style.border = "5px solid green";
             canvas.style.border = "3px solid green";
             color = "aqua";
             dangerzone_div.style.display = "none";
@@ -473,15 +411,17 @@ poseDetectionFrame();
 
     async function bindPage() {
   
+  let net;
+
   if (isMobile()) {
-    const net = await posenet.load({
+    net = await posenet.load({
       architecture: 'MobileNetV1',
       outputStride: 16,
       inputResolution: { width: 640, height: 480 },
       multiplier: 0.75
   });
 } else {
-  const net = await posenet.load({
+  net = await posenet.load({
       architecture: 'ResNet50',
       outputStride: 32,
       inputResolution: { width: 257, height: 200 },
