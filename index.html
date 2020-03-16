@@ -7,15 +7,15 @@
         body {
           font-family: Arial;
           background-color: #eeeeee;
-        }
-        h1 {
-            color: red;
-        }
-        #info {
-            font-size: 10px;
-            color: #222222;
-        }
-    </style>
+      }
+      h1 {
+        color: red;
+    }
+    #info {
+        font-size: 10px;
+        color: #222222;
+    }
+</style>
 </head>
 <body>
     <div id="page" style="width: 100%;">
@@ -41,113 +41,113 @@
 
     function isAndroid() {
       return /Android/i.test(navigator.userAgent);
-    }
+  }
 
-    function isiOS() {
+  function isiOS() {
       return /iPhone|iPad|iPod/i.test(navigator.userAgent);
-    }
+  }
 
     // export function isMobile() {
-    function isMobile() {
-      return isAndroid() || isiOS();
+        function isMobile() {
+          return isAndroid() || isiOS();
+      }
+
+      async function setupCamera() {
+          if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            throw new Error(
+                'Browser API navigator.mediaDevices.getUserMedia not available');
+        }
+
+        const mobile = isMobile();
+        if (mobile) {
+            videoWidth = 320;
+            videoHeight = 600;
+        }
+
+        const video = document.getElementById('video');
+        video.width = videoWidth;
+        video.height = videoHeight;
+
+        const stream = await navigator.mediaDevices.getUserMedia({
+            'audio': false,
+            'video': {
+              facingMode: 'user',
+              width: mobile ? undefined : videoWidth,
+              height: mobile ? undefined : videoHeight,
+          },
+      });
+        video.srcObject = stream;
+
+        return new Promise((resolve) => {
+            video.onloadedmetadata = () => {
+              resolve(video);
+          };
+      });
     }
 
-    async function setupCamera() {
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error(
-            'Browser API navigator.mediaDevices.getUserMedia not available');
-    }
+    async function loadVideo() {
+      const video = await setupCamera();
+      video.play();
 
-    const mobile = isMobile();
-    if (mobile) {
-        videoWidth = 320;
-        videoHeight = 600;
-    }
-
-    const video = document.getElementById('video');
-    video.width = videoWidth;
-    video.height = videoHeight;
-
-    const stream = await navigator.mediaDevices.getUserMedia({
-        'audio': false,
-        'video': {
-          facingMode: 'user',
-          width: mobile ? undefined : videoWidth,
-          height: mobile ? undefined : videoHeight,
-      },
-  });
-    video.srcObject = stream;
-
-    return new Promise((resolve) => {
-        video.onloadedmetadata = () => {
-          resolve(video);
-      };
-  });
-}
-
-async function loadVideo() {
-  const video = await setupCamera();
-  video.play();
-
-  return video;
-}
+      return video;
+  }
 
 
-function toTuple({y, x}) {
-  return [y, x];
-}
+  function toTuple({y, x}) {
+      return [y, x];
+  }
 
 // export function drawPoint(ctx, y, x, r, color) {
-function drawPoint(ctx, y, x, r, color) {
-  ctx.beginPath();
-  ctx.arc(x, y, r, 0, 2 * Math.PI);
-  ctx.fillStyle = color;
-  ctx.fill();
-}
+    function drawPoint(ctx, y, x, r, color) {
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, 2 * Math.PI);
+      ctx.fillStyle = color;
+      ctx.fill();
+  }
 
 /**
  * Draws a line on a canvas, i.e. a joint
  */
 // export function drawSegment([ay, ax], [by, bx], color, scale, ctx) {
-function drawSegment([ay, ax], [by, bx], color, scale, ctx) {
-  ctx.beginPath();
-  ctx.moveTo(ax * scale, ay * scale);
-  ctx.lineTo(bx * scale, by * scale);
-  ctx.lineWidth = lineWidth;
-  ctx.strokeStyle = color;
-  ctx.stroke();
-}
+    function drawSegment([ay, ax], [by, bx], color, scale, ctx) {
+      ctx.beginPath();
+      ctx.moveTo(ax * scale, ay * scale);
+      ctx.lineTo(bx * scale, by * scale);
+      ctx.lineWidth = lineWidth;
+      ctx.strokeStyle = color;
+      ctx.stroke();
+  }
 
 
 /**
  * Draws a pose skeleton by looking up all adjacent keypoints/joints
  */
 // export function drawSkeleton(keypoints, minConfidence, ctx, scale = 1) {
-function drawSkeleton(keypoints, minConfidence, ctx, scale = 1) {
-  const adjacentKeyPoints =
+    function drawSkeleton(keypoints, minConfidence, ctx, scale = 1) {
+      const adjacentKeyPoints =
       posenet.getAdjacentKeyPoints(keypoints, minConfidence);
 
-  adjacentKeyPoints.forEach((keypoints) => {
-    drawSegment(
-        toTuple(keypoints[0].position), toTuple(keypoints[1].position), color,
-        scale, ctx);
-  });
-}
+      adjacentKeyPoints.forEach((keypoints) => {
+        drawSegment(
+            toTuple(keypoints[0].position), toTuple(keypoints[1].position), color,
+            scale, ctx);
+    });
+  }
 
 /**
  * Draw pose keypoints onto a canvas
  */
 // export function drawKeypoints(keypoints, minConfidence, ctx, scale = 1) {
-function drawKeypoints(keypoints, minConfidence, ctx, scale = 1) {
-  for (let i = 0; i < keypoints.length; i++) {
-    const keypoint = keypoints[i];
+    function drawKeypoints(keypoints, minConfidence, ctx, scale = 1) {
+      for (let i = 0; i < keypoints.length; i++) {
+        const keypoint = keypoints[i];
 
-    if (keypoint.score < minConfidence) {
-      continue;
-    }
+        if (keypoint.score < minConfidence) {
+          continue;
+      }
 
-    const {y, x} = keypoint.position;
-    drawPoint(ctx, y * scale, x * scale, 3, color);
+      const {y, x} = keypoint.position;
+      drawPoint(ctx, y * scale, x * scale, 3, color);
   }
 }
 
@@ -157,51 +157,51 @@ function drawKeypoints(keypoints, minConfidence, ctx, scale = 1) {
  * ankles
  */
 // export function drawBoundingBox(keypoints, ctx) {
-function drawBoundingBox(keypoints, ctx) {
-  const boundingBox = posenet.getBoundingBox(keypoints);
+    function drawBoundingBox(keypoints, ctx) {
+      const boundingBox = posenet.getBoundingBox(keypoints);
 
-  ctx.rect(
-      boundingBox.minX, boundingBox.minY, boundingBox.maxX - boundingBox.minX,
-      boundingBox.maxY - boundingBox.minY);
+      ctx.rect(
+          boundingBox.minX, boundingBox.minY, boundingBox.maxX - boundingBox.minX,
+          boundingBox.maxY - boundingBox.minY);
 
-  ctx.strokeStyle = boundingBoxColor;
-  ctx.stroke();
-}
+      ctx.strokeStyle = boundingBoxColor;
+      ctx.stroke();
+  }
 
 /**
  * Converts an arary of pixel data into an ImageData object
  */
 // export async function renderToCanvas(a, ctx) {
-async function renderToCanvas(a, ctx) {
-  const [height, width] = a.shape;
-  const imageData = new ImageData(width, height);
+    async function renderToCanvas(a, ctx) {
+      const [height, width] = a.shape;
+      const imageData = new ImageData(width, height);
 
-  const data = await a.data();
+      const data = await a.data();
 
-  for (let i = 0; i < height * width; ++i) {
-    const j = i * 4;
-    const k = i * 3;
+      for (let i = 0; i < height * width; ++i) {
+        const j = i * 4;
+        const k = i * 3;
 
-    imageData.data[j + 0] = data[k + 0];
-    imageData.data[j + 1] = data[k + 1];
-    imageData.data[j + 2] = data[k + 2];
-    imageData.data[j + 3] = 255;
-  }
+        imageData.data[j + 0] = data[k + 0];
+        imageData.data[j + 1] = data[k + 1];
+        imageData.data[j + 2] = data[k + 2];
+        imageData.data[j + 3] = 255;
+    }
 
-  ctx.putImageData(imageData, 0, 0);
+    ctx.putImageData(imageData, 0, 0);
 }
 
 /**
  * Draw an image on a canvas
  */
 // export function renderImageToCanvas(image, size, canvas) {
-function renderImageToCanvas(image, size, canvas) {
-  canvas.width = size[0];
-  canvas.height = size[1];
-  const ctx = canvas.getContext('2d');
+    function renderImageToCanvas(image, size, canvas) {
+      canvas.width = size[0];
+      canvas.height = size[1];
+      const ctx = canvas.getContext('2d');
 
-  ctx.drawImage(image, 0, 0);
-}
+      ctx.drawImage(image, 0, 0);
+  }
 
 
 /**
@@ -210,19 +210,19 @@ function renderImageToCanvas(image, size, canvas) {
  * https://medium.com/tensorflow/real-time-human-pose-estimation-in-the-browser-with-tensorflow-js-7dd0bc881cd5
  */
 // export function drawHeatMapValues(heatMapValues, outputStride, canvas) {
-function drawHeatMapValues(heatMapValues, outputStride, canvas) {
-  const ctx = canvas.getContext('2d');
-  const radius = 5;
-  const scaledValues = heatMapValues.mul(tf.scalar(outputStride, 'int32'));
+    function drawHeatMapValues(heatMapValues, outputStride, canvas) {
+      const ctx = canvas.getContext('2d');
+      const radius = 5;
+      const scaledValues = heatMapValues.mul(tf.scalar(outputStride, 'int32'));
 
-  drawPoints(ctx, scaledValues, radius, color);
-}
+      drawPoints(ctx, scaledValues, radius, color);
+  }
 
 /**
  * Used by the drawHeatMapValues method to draw heatmap points on to
  * the canvas
  */
-function drawPoints(ctx, points, radius, color) {
+ function drawPoints(ctx, points, radius, color) {
   const data = points.buffer().values;
 
   for (let i = 0; i < data.length; i += 2) {
@@ -234,8 +234,8 @@ function drawPoints(ctx, points, radius, color) {
       ctx.arc(pointX, pointY, radius, 0, 2 * Math.PI);
       ctx.fillStyle = color;
       ctx.fill();
-    }
   }
+}
 }
 
 /**
@@ -247,7 +247,7 @@ function drawPoints(ctx, points, radius, color) {
 function drawOffsetVectors(
     heatMapValues, offsets, outputStride, scale = 1, ctx) {
   const offsetPoints =
-      posenet.singlePose.getOffsetPoints(heatMapValues, outputStride, offsets);
+  posenet.singlePose.getOffsetPoints(heatMapValues, outputStride, offsets);
 
   const heatmapData = heatMapValues.buffer().values;
   const offsetPointsData = offsetPoints.buffer().values;
@@ -260,7 +260,7 @@ function drawOffsetVectors(
 
     drawSegment(
         [heatmapY, heatmapX], [offsetPointY, offsetPointX], color, scale, ctx);
-  }
+}
 }
 
 
@@ -366,11 +366,11 @@ function detectPoseInRealTime(video, net) {
     // switch (guiState.algorithm) {
     //   case 'single-pose':
     // const pose = await guiState.net.estimatePoses(video, {
-    const pose = await net.estimatePoses(video, {
-      flipHorizontal: flipPoseHorizontal,
-      decodingMethod: 'single-person'
-    });
-    poses = poses.concat(pose);
+        const pose = await net.estimatePoses(video, {
+          flipHorizontal: flipPoseHorizontal,
+          decodingMethod: 'single-person'
+      });
+        poses = poses.concat(pose);
     // minPoseConfidence = +guiState.singlePoseDetection.minPoseConfidence;
     // minPartConfidence = +guiState.singlePoseDetection.minPartConfidence;
         // break;
@@ -425,32 +425,30 @@ function detectPoseInRealTime(video, net) {
           info_div.textContent = '';
           for (const wrist of [keypoints[9], keypoints[10]]) {
             for (const face of [keypoints[0], keypoints[1], keypoints[2]]) {
-                let dist = Math.pow(Math.pow(wrist["position"]["x"] - face["position"]["x"], 2) + Math.pow(wrist["position"]["y"] - face["position"]["y"], 2), 0.5);
-                // console.log("Dist ("+ wrist["part"] +" <-> "+ face["part"] +"):" + dist);
-                // info_div.textContent += "Dist ("+ wrist["part"] +" <-> "+ face["part"] +"): " + dist + "\n";
-                info_div.innerHTML += "Dist ("+ wrist["part"] +" <-> "+ face["part"] +"): " + dist + "\n<br>";
-                // info_div.textContent = 'Stop touching your face!';
-                
-                min_dist = Math.min(min_dist, dist);
+                if (wrist.score > minPartConfidence && face.score > minPartConfidence) {
+                    let dist = Math.pow(Math.pow(wrist["position"]["x"] - face["position"]["x"], 2) + Math.pow(wrist["position"]["y"] - face["position"]["y"], 2), 0.5);
+                    info_div.innerHTML += "Dist ("+ wrist["part"] +" <-> "+ face["part"] +"): " + dist + "\n<br>";
+                    min_dist = Math.min(min_dist, dist);
+                }
 
             }
-          }
+        }
 
-          if (min_dist < 175) {
+        if (min_dist < 175) {
             // info_div.style.border = "5px solid red";
             // video.style.border = "5px solid red";
             canvas.style.border = "5px solid red";
             color = "red";
             dangerzone_div.style.display = "table";
 
-          } else {
+        } else {
             // info_div.style.border = "5px solid green";
             // video.style.border = "5px solid green";
             canvas.style.border = "3px solid green";
             color = "aqua";
             dangerzone_div.style.display = "none";
-          }
-          drawKeypoints(keypoints, minPartConfidence, ctx);
+        }
+        drawKeypoints(keypoints, minPartConfidence, ctx);
 
 
         // }
@@ -460,21 +458,21 @@ function detectPoseInRealTime(video, net) {
         // if (guiState.output.showBoundingBox) {
         //   drawBoundingBox(keypoints, ctx);
         // }
-      }
-    });
+    }
+});
 
     // End monitoring code for frames per second
     // stats.end();
 
     requestAnimationFrame(poseDetectionFrame);
-  }
+}
 
-  poseDetectionFrame();
+poseDetectionFrame();
 }
 
 
 // export async function bindPage() {
-async function bindPage() {
+    async function bindPage() {
   // toggleLoadingUI(true);
   // const net = await posenet.load({
   //   architecture: guiState.input.architecture,
@@ -485,48 +483,39 @@ async function bindPage() {
   // });
   // toggleLoadingUI(false);
   
-      // const net = await posenet.load({
-    //   architecture: 'MobileNetV1',
-    //   outputStride: 16,
-    //   inputResolution: { width: 640, height: 480 },
-    //   multiplier: 0.75
-    // });
+  if isMobile() {
+    const net = await posenet.load({
+      architecture: 'MobileNetV1',
+      outputStride: 16,
+      inputResolution: { width: 640, height: 480 },
+      multiplier: 0.75
+  });
+} else {
   const net = await posenet.load({
       architecture: 'ResNet50',
       outputStride: 32,
       inputResolution: { width: 257, height: 200 },
       quantBytes: 2
   });
+}
 
-  let video;
+let video;
 
-  try {
+try {
     video = await loadVideo();
-  } catch (e) {
+} catch (e) {
     let info = document.getElementById('info');
     info.textContent = 'this browser does not support video capture,' +
-        'or this device does not have a camera';
+    'or this device does not have a camera';
     info.style.display = 'block';
     throw e;
-  }
+}
 
-  // setupGui([], net);
-  // setupFPS();
-  detectPoseInRealTime(video, net);
+detectPoseInRealTime(video, net);
 }
 
 
 bindPage();
 
-  //   var imageElement = document.getElementById('video');
-
-  //   posenet.load().then(function(net) {
-  //     const pose = net.estimateSinglePose(imageElement, {
-  //       flipHorizontal: true
-  //   });
-  //     return pose;
-  // }).then(function(pose){
-  //     console.log(pose);
-  // })
 </script>
 </html>
